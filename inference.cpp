@@ -1,5 +1,6 @@
 #include "inference.h"
 #include <regex>
+#include <cassert>
 
 #define benchmark
 #define min(a,b)            (((a) < (b)) ? (a) : (b))
@@ -86,13 +87,14 @@ char* YOLO_V8::PreProcess(cv::Mat& iImg, std::vector<int> iImgSize, cv::Mat& oIm
         cv::resize(oImg(cv::Rect(left, top, m, m)), oImg, cv::Size(iImgSize.at(0), iImgSize.at(1)));
         break;
     }
+    default: assert(0);
     }
     return RET_OK;
 }
 
 
-char* YOLO_V8::CreateSession(DL_INIT_PARAM& iParams) {
-    char* Ret = RET_OK;
+const char* YOLO_V8::CreateSession(DL_INIT_PARAM& iParams) {
+    const char* Ret = RET_OK;
     std::regex pattern("[\u4e00-\u9fa5]");
     bool result = std::regex_search(iParams.modelPath, pattern);
     if (result)

@@ -64,7 +64,7 @@ public:
     ~YOLO_V8();
 
 public:
-    char* CreateSession(DL_INIT_PARAM& iParams);
+    const char* CreateSession(DL_INIT_PARAM& iParams);
 
     char* RunSession(cv::Mat& iImg, std::vector<DL_RESULT>& oResult);
 
