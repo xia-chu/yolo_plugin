@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 
+set(CMAKE_VERBOSE_MAKEFILE TRUE)
 set(PROJECT_NAME Yolov8OnnxRuntimeCPPInference)
 project(${PROJECT_NAME} VERSION 0.0.1 LANGUAGES CXX)
-
 
 # -------------- Support C++17 for using filesystem  ------------------#
 set(CMAKE_CXX_STANDARD 17)
@@ -27,11 +27,14 @@ else ()
 endif ()
 
 # -------------- ONNXRUNTIME  ------------------#
-if(NOT DEFINED ONNXRUNTIME_ROOT OR ONNXRUNTIME_ROOT STREQUAL "")
+if (NOT DEFINED ONNXRUNTIME_ROOT OR ONNXRUNTIME_ROOT STREQUAL "")
     message(FATAL_ERROR "ONNXRUNTIME_ROOT is required")
 endif ()
 
 include_directories(${PROJECT_NAME} ${ONNXRUNTIME_ROOT}/include)
+
+# 添加插件
+add_subdirectory(plugin)
 
 set(PROJECT_SOURCES
         main.cpp
@@ -72,5 +75,5 @@ configure_file(yolov8n.onnx ${CMAKE_CURRENT_BINARY_DIR}/yolov8n.onnx COPYONLY)
 
 # Create folder name images in the same folder of the executable file
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/images
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/images
 )
