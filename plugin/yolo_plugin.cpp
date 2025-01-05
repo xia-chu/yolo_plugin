@@ -5,6 +5,7 @@
 #include <cassert>
 #include <iomanip>
 #include <fstream>
+#include <thread>
 #include "video_plugin.h"
 #include "../inference.h"
 
@@ -131,6 +132,10 @@ static void s_plugin_onunload() {
     s_loader = nullptr;
 }
 
+static int s_plugin_max_threads() {
+    return std::thread::hardware_concurrency();
+}
+
 static int s_plugin_instance_create(plugin_instance **ptr, void *config_map, void *err) {
     assert(ptr && config_map);
     *ptr = (plugin_instance *) malloc(sizeof(plugin_instance));
@@ -198,6 +203,7 @@ static plugin_interface interface{
         .plugin_name = s_plugin_name,
         .plugin_onload = s_plugin_onload,
         .plugin_onunload = s_plugin_onunload,
+        .plugin_max_threads = s_plugin_max_threads,
         .plugin_instance_create = s_plugin_instance_create,
         .plugin_instance_free = s_plugin_instance_free,
         .plugin_input_pixel_fmt = s_plugin_input_pixel_fmt,

@@ -46,6 +46,11 @@ typedef struct {
     void (*plugin_onunload)();
 
     /**
+     * 该模型释放支持多线程并发执行
+     */
+    int (*plugin_max_threads)();
+
+    /**
      * 创建插件实例
      * @param ptr 返回实例对象
      * @param config_map std::map<std::string, std::string> *类型，存放插件配置
