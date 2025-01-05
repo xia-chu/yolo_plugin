@@ -160,7 +160,7 @@ static int s_plugin_max_thread_safety() {
 
 static int s_plugin_instance_create(plugin_instance **ptr, void *config_map, void *err) {
     assert(ptr && config_map);
-    *ptr = (plugin_instance *) malloc(sizeof(plugin_instance));
+    *ptr = (plugin_instance *) new plugin_instance;
     auto map = (std::map<std::string, std::string> *) config_map;
     auto e = (std::string *) err;
 
@@ -211,7 +211,7 @@ static void s_plugin_instance_free(plugin_instance **ptr) {
     if (!ptr || !*ptr) {
         return;
     }
-    free(*ptr);
+    delete *ptr;
     *ptr = nullptr;
     LOG_I("free plugin instance: %s", s_plugin_name());
 }
