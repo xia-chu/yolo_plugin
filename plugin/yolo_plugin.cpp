@@ -49,49 +49,6 @@ struct plugin_instance {
     YOLO_V8 yoloDetector;
     int interval = 1;
 
-#if 0
-    int ReadCocoYaml(const char *yaml) {
-        // Open the YAML file
-        std::ifstream file(yaml);
-        if (!file.is_open()) {
-            LOG_E("Failed to open file: %s", yaml);
-            return 1;
-        }
-
-        // Read the file line by line
-        std::string line;
-        std::vector<std::string> lines;
-        while (std::getline(file, line)) {
-            lines.push_back(line);
-        }
-
-        // Find the start and end of the names section
-        std::size_t start = 0;
-        std::size_t end = 0;
-        for (std::size_t i = 0; i < lines.size(); i++) {
-            if (lines[i].find("names:") != std::string::npos) {
-                start = i + 1;
-            } else if (start > 0 && lines[i].find(':') == std::string::npos) {
-                end = i;
-                break;
-            }
-        }
-
-        // Extract the names
-        std::vector<std::string> names;
-        for (std::size_t i = start; i < end; i++) {
-            std::stringstream ss(lines[i]);
-            std::string name;
-            std::getline(ss, name, ':'); // Extract the number before the delimiter
-            std::getline(ss, name); // Extract the string after the delimiter
-            names.push_back(std::move(name));
-        }
-
-        this->yoloDetector.classes = std::move(names);
-        return 0;
-    }
-#endif
-
     int Detector(size_t index, AVFrame *frame) {
         if (frame->format != AV_PIX_FMT_RGB24) {
             LOG_E("Input AVFrame is not in RGB24 format");
@@ -158,19 +115,15 @@ static int s_plugin_max_thread_safety() {
     return false;
 }
 
-static int s_plugin_instance_create(plugin_instance **ptr, void *config_map, void *err) {
+static int s_plugin_instance_create(plugin_instance **ptr, const char *const* config_map, char *err) {
     assert(ptr && config_map);
     *ptr = (plugin_instance *) new plugin_instance;
-    auto map = *((std::map<std::string, std::string> *) config_map);
-    auto e = (std::string *) err;
 
-#if 0
-    if ((*ptr)->ReadCocoYaml((*map)["yaml"].data())) {
-        free(*ptr);
-        *ptr = nullptr;
-        return -1;
+    std::map<std::string, std::string> map;
+    for (auto i = 0u; config_map[i] && config_map[i + 1];) {
+        map[config_map[i]] = config_map[i + 1];
+        i += 2;
     }
-#endif
     map.emplace("interval", "1");
     map.emplace("rectConfidenceThreshold", "0.1");
     map.emplace("iouThreshold", "0.5");
@@ -202,8 +155,8 @@ static int s_plugin_instance_create(plugin_instance **ptr, void *config_map, voi
 
 #endif
     auto str = (*ptr)->yoloDetector.CreateSession(params);
-    if (str && e) {
-        *e = str;
+    if (str && err) {
+        strcpy(err, str);
     }
     if (!str) {
         LOG_I("create plugin instance success: %s", s_plugin_name());

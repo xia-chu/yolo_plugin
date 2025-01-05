@@ -58,11 +58,11 @@ typedef struct {
     /**
      * 创建插件实例
      * @param ptr 返回实例对象
-     * @param config_map std::map<std::string, std::string> *类型，存放插件配置
-     * @param err std::string* 类型，存放错误提示，可用为null
+     * @param config_map {"key0", "val0", "key1", "val2", NULL}类型，存放插件配置
+     * @param err 存放错误提示，可用为null, 建议保留1024个字节
      * @return 0: 成功，其他为错误原因
      */
-    int (*plugin_instance_create)(plugin_instance **ptr, void *config_map, void *err);
+    int (*plugin_instance_create)(plugin_instance **ptr, const char *const* config_map, char *err);
 
     /**
      * 释放插件实例
