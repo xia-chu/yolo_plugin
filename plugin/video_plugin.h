@@ -51,6 +51,11 @@ typedef struct {
     int (*plugin_max_threads)();
 
     /**
+     * 多线程模式下单实例是否线程安全
+     */
+    int (*plugin_max_thread_safety)();
+
+    /**
      * 创建插件实例
      * @param ptr 返回实例对象
      * @param config_map std::map<std::string, std::string> *类型，存放插件配置

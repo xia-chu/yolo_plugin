@@ -47,6 +47,9 @@ static bool init_color() {
 
 struct plugin_instance {
     YOLO_V8 yoloDetector;
+    int index = 0;
+    int interval = 1;
+    std::vector<DL_RESULT> last_res;
 
 #if 0
     int ReadCocoYaml(const char *yaml) {
@@ -97,9 +100,12 @@ struct plugin_instance {
             return -1;
         }
         cv::Mat img(frame->height, frame->width, CV_8UC3, frame->data[0], frame->linesize[0]);
-        std::vector<DL_RESULT> res;
-        yoloDetector.RunSession(img, res);
-        for (auto &re: res) {
+        if (++index % interval == 0) {
+            std::vector<DL_RESULT> res;
+            yoloDetector.RunSession(img, res);
+            last_res = std::move(res);
+        }
+        for (auto &re: last_res) {
             auto &color = s_classes_color[re.classId];
             cv::rectangle(img, re.box, color, 3);
             float confidence = floor(100 * re.confidence) / 100;
@@ -148,6 +154,10 @@ static int s_plugin_max_threads() {
     return std::thread::hardware_concurrency();
 }
 
+static int s_plugin_max_thread_safety() {
+    return true;
+}
+
 static int s_plugin_instance_create(plugin_instance **ptr, void *config_map, void *err) {
     assert(ptr && config_map);
     *ptr = (plugin_instance *) malloc(sizeof(plugin_instance));
@@ -162,6 +172,10 @@ static int s_plugin_instance_create(plugin_instance **ptr, void *config_map, voi
     }
 #endif
     (*ptr)->yoloDetector.classes = s_classes;
+    (*ptr)->interval = std::atoi((*map)["interval"].data());
+    if ((*ptr)->interval <= 0) {
+        (*ptr)->interval = 1;
+    }
 
     DL_INIT_PARAM params;
     params.rectConfidenceThreshold = 0.1;
@@ -216,6 +230,7 @@ static plugin_interface interface{
         .plugin_onload = s_plugin_onload,
         .plugin_onunload = s_plugin_onunload,
         .plugin_max_threads = s_plugin_max_threads,
+        .plugin_max_thread_safety = s_plugin_max_thread_safety,
         .plugin_instance_create = s_plugin_instance_create,
         .plugin_instance_free = s_plugin_instance_free,
         .plugin_input_pixel_fmt = s_plugin_input_pixel_fmt,
