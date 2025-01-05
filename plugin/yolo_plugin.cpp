@@ -33,6 +33,18 @@ static std::vector<std::string> s_classes{"person", "bicycle", "car", "motorcycl
                                           "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock",
                                           "vase", "scissors", "teddy bear", "hair drier", "toothbrush"};
 
+
+static std::vector<cv::Scalar> s_classes_color;
+
+static bool init_color() {
+    cv::RNG rng(cv::getTickCount());
+    s_classes_color.resize(s_classes.size());
+    for (auto i = 0; i < s_classes.size(); ++i) {
+        s_classes_color[i] = cv::Scalar(rng.uniform(0, 256), rng.uniform(0, 256), rng.uniform(0, 256));
+    }
+    return true;
+}
+
 struct plugin_instance {
     YOLO_V8 yoloDetector;
 
@@ -88,8 +100,7 @@ struct plugin_instance {
         std::vector<DL_RESULT> res;
         yoloDetector.RunSession(img, res);
         for (auto &re: res) {
-            cv::RNG rng(cv::getTickCount());
-            cv::Scalar color(rng.uniform(0, 256), rng.uniform(0, 256), rng.uniform(0, 256));
+            auto &color = s_classes_color[re.classId];
             cv::rectangle(img, re.box, color, 3);
             float confidence = floor(100 * re.confidence) / 100;
             std::string label = yoloDetector.classes[re.classId] + " " +
@@ -122,6 +133,7 @@ static const char *s_plugin_name() {
 }
 
 static void s_plugin_onload(const plugin_loader *loader) {
+    static auto flag = init_color();
     assert(loader);
     s_loader = loader;
     LOG_I("plugin: %s loaded", s_plugin_name());
