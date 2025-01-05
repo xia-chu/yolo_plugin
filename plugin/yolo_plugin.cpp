@@ -16,9 +16,26 @@ static const plugin_loader *s_loader = nullptr;
 #define LOG_W(...) PLUGIN_LOG(3, ##__VA_ARGS__)
 #define LOG_E(...) PLUGIN_LOG(4, ##__VA_ARGS__)
 
+
+static std::vector<std::string> s_classes{"person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck",
+                                          "boat", "traffic light", "fire hydrant",
+                                          "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep",
+                                          "cow", "elephant", "bear", "zebra",
+                                          "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee",
+                                          "skis", "snowboard", "sports ball", "kite",
+                                          "baseball bat", "baseball glove", "skateboard", "surfboard", "tennis racket",
+                                          "bottle", "wine glass", "cup", "fork", "knife",
+                                          "spoon", "bowl", "banana", "apple", "sandwich", "orange", "broccoli",
+                                          "carrot", "hot dog", "pizza", "donut", "cake", "chair",
+                                          "couch", "potted plant", "bed", "dining table", "toilet", "tv", "laptop",
+                                          "mouse", "remote", "keyboard", "cell phone",
+                                          "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock",
+                                          "vase", "scissors", "teddy bear", "hair drier", "toothbrush"};
+
 struct plugin_instance {
     YOLO_V8 yoloDetector;
 
+#if 0
     int ReadCocoYaml(const char *yaml) {
         // Open the YAML file
         std::ifstream file(yaml);
@@ -59,6 +76,7 @@ struct plugin_instance {
         this->yoloDetector.classes = std::move(names);
         return 0;
     }
+#endif
 
     int Detector(AVFrame *frame) {
         if (frame->format != AV_PIX_FMT_RGB24) {
@@ -119,11 +137,14 @@ static int s_plugin_instance_create(plugin_instance **ptr, void *config_map, voi
     auto map = (std::map<std::string, std::string> *) config_map;
     auto e = (std::string *) err;
 
+#if 0
     if ((*ptr)->ReadCocoYaml((*map)["yaml"].data())) {
         free(*ptr);
         *ptr = nullptr;
         return -1;
     }
+#endif
+    (*ptr)->yoloDetector.classes = s_classes;
 
     DL_INIT_PARAM params;
     params.rectConfidenceThreshold = 0.1;
