@@ -79,10 +79,11 @@ typedef struct {
     /**
      * 输入视频帧并处理
      * @param ptr 插件实例指针
+     * @param frame_index 输入的帧序号
      * @param frame 输入的帧
      * @param out 处理后需要保存的结构化数据，可以为null
      */
-    int (*plugin_instance_input)(plugin_instance *ptr, AVFrame *frame, void *out);
+    int (*plugin_instance_input)(plugin_instance *ptr, size_t frame_index, AVFrame *frame, void *out);
 } plugin_interface;
 
 /**

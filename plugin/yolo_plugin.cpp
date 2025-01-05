@@ -47,9 +47,7 @@ static bool init_color() {
 
 struct plugin_instance {
     YOLO_V8 yoloDetector;
-    int index = 0;
     int interval = 1;
-    std::vector<DL_RESULT> last_res;
 
 #if 0
     int ReadCocoYaml(const char *yaml) {
@@ -94,18 +92,20 @@ struct plugin_instance {
     }
 #endif
 
-    int Detector(AVFrame *frame) {
+    int Detector(size_t index, AVFrame *frame) {
         if (frame->format != AV_PIX_FMT_RGB24) {
             LOG_E("Input AVFrame is not in RGB24 format");
             return -1;
         }
-        cv::Mat img(frame->height, frame->width, CV_8UC3, frame->data[0], frame->linesize[0]);
-        if (++index % interval == 0) {
-            std::vector<DL_RESULT> res;
-            yoloDetector.RunSession(img, res);
-            last_res = std::move(res);
+
+        if (index % interval) {
+            return 0;
         }
-        for (auto &re: last_res) {
+
+        cv::Mat img(frame->height, frame->width, CV_8UC3, frame->data[0], frame->linesize[0]);
+        std::vector<DL_RESULT> res;
+        yoloDetector.RunSession(img, res);
+        for (auto &re: res) {
             auto &color = s_classes_color[re.classId];
             cv::rectangle(img, re.box, color, 3);
             float confidence = floor(100 * re.confidence) / 100;
@@ -155,7 +155,7 @@ static int s_plugin_max_threads() {
 }
 
 static int s_plugin_max_thread_safety() {
-    return true;
+    return false;
 }
 
 static int s_plugin_instance_create(plugin_instance **ptr, void *config_map, void *err) {
@@ -220,9 +220,9 @@ static AVPixelFormat s_plugin_input_pixel_fmt(plugin_instance *ptr) {
     return AV_PIX_FMT_RGB24;
 }
 
-static int s_plugin_instance_input(plugin_instance *ptr, AVFrame *frame, void *out) {
+static int s_plugin_instance_input(plugin_instance *ptr, size_t index, AVFrame *frame, void *out) {
     assert(ptr && frame && frame->format == s_plugin_input_pixel_fmt(ptr));
-    return ptr->Detector(frame);
+    return ptr->Detector(index, frame);
 }
 
 static plugin_interface interface{

@@ -11,6 +11,12 @@ YOLO_V8::YOLO_V8() {
 
 YOLO_V8::~YOLO_V8() {
     delete session;
+    for (auto ptr: inputNodeNames) {
+        delete[] ptr;
+    }
+    for (auto ptr: outputNodeNames) {
+        delete[] ptr;
+    }
 }
 
 #ifdef USE_CUDA
