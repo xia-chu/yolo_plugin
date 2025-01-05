@@ -161,7 +161,7 @@ static int s_plugin_max_thread_safety() {
 static int s_plugin_instance_create(plugin_instance **ptr, void *config_map, void *err) {
     assert(ptr && config_map);
     *ptr = (plugin_instance *) new plugin_instance;
-    auto map = (std::map<std::string, std::string> *) config_map;
+    auto map = *((std::map<std::string, std::string> *) config_map);
     auto e = (std::string *) err;
 
 #if 0
@@ -171,17 +171,21 @@ static int s_plugin_instance_create(plugin_instance **ptr, void *config_map, voi
         return -1;
     }
 #endif
+    map.emplace("interval", "1");
+    map.emplace("rectConfidenceThreshold", "0.1");
+    map.emplace("iouThreshold", "0.5");
+    map.emplace("model", "yolov8n.onnx");
+    map.emplace("imgWidth", "640");
+    map.emplace("imgHeight", "640");
+
     (*ptr)->yoloDetector.classes = s_classes;
-    (*ptr)->interval = std::atoi((*map)["interval"].data());
-    if ((*ptr)->interval <= 0) {
-        (*ptr)->interval = 1;
-    }
+    (*ptr)->interval = std::atoi(map["interval"].data());
 
     DL_INIT_PARAM params;
-    params.rectConfidenceThreshold = 0.1;
-    params.iouThreshold = 0.5;
-    params.modelPath = (*map)["model"].data();
-    params.imgSize = {640, 640};
+    params.rectConfidenceThreshold = std::atof(map["rectConfidenceThreshold"].data());
+    params.iouThreshold = std::atof(map["iouThreshold"].data());
+    params.modelPath = map["model"].data();
+    params.imgSize = {std::atoi(map["imgWidth"].data()), std::atoi(map["imgHeight"].data())};
 #ifdef USE_CUDA
     params.cudaEnable = true;
 
