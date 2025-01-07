@@ -10,6 +10,10 @@ target_include_directories(${plugin_name} PRIVATE PkgConfig::AVUTIL)
 # 链接库
 target_link_libraries(${plugin_name} PkgConfig::AVUTIL)
 
+if (MSVC)
+    add_definitions(-DPLUGIN_EXPORTS)
+endif ()
+
 if (WIN32)
     target_link_libraries(${plugin_name} ${OpenCV_LIBS} ${ONNXRUNTIME_ROOT}/lib/onnxruntime.lib)
     if (USE_CUDA)

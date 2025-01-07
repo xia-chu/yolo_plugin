@@ -8,6 +8,9 @@
 #include <thread>
 #include "video_plugin.h"
 #include "../inference.h"
+extern "C" {
+#include "libavutil/frame.h"
+}
 
 static const plugin_loader *s_loader = nullptr;
 #define PLUGIN_LOG(lev, ...) s_loader->printf_log(lev, __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__)
@@ -49,7 +52,7 @@ struct plugin_instance {
     YOLO_V8 yoloDetector;
     int interval = 1;
 
-    int Detector(size_t index, AVFrame *frame) {
+    int Detector(int index, AVFrame *frame) {
         if (frame->format != AV_PIX_FMT_RGB24) {
             LOG_E("Input AVFrame is not in RGB24 format");
             return -1;
@@ -111,7 +114,7 @@ static int s_plugin_max_threads() {
     return std::thread::hardware_concurrency();
 }
 
-static int s_plugin_max_thread_safety() {
+static int s_plugin_thread_safety() {
     return false;
 }
 
@@ -173,11 +176,11 @@ static void s_plugin_instance_free(plugin_instance **ptr) {
     LOG_I("free plugin instance: %s", s_plugin_name());
 }
 
-static AVPixelFormat s_plugin_input_pixel_fmt(plugin_instance *ptr) {
+static int s_plugin_input_pixel_fmt(plugin_instance *ptr) {
     return AV_PIX_FMT_RGB24;
 }
 
-static int s_plugin_instance_input(plugin_instance *ptr, size_t index, AVFrame *frame, void *out) {
+static int s_plugin_instance_input(plugin_instance *ptr, int index, AVFrame *frame, void *out) {
     assert(ptr && frame && frame->format == s_plugin_input_pixel_fmt(ptr));
     return ptr->Detector(index, frame);
 }
@@ -187,7 +190,7 @@ static plugin_interface interface{
         .plugin_onload = s_plugin_onload,
         .plugin_onunload = s_plugin_onunload,
         .plugin_max_threads = s_plugin_max_threads,
-        .plugin_max_thread_safety = s_plugin_max_thread_safety,
+        .plugin_thread_safety = s_plugin_thread_safety,
         .plugin_instance_create = s_plugin_instance_create,
         .plugin_instance_free = s_plugin_instance_free,
         .plugin_input_pixel_fmt = s_plugin_input_pixel_fmt,
